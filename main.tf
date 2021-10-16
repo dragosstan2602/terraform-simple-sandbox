@@ -10,7 +10,8 @@ terraform {
 
 provider "aws" {  
   profile = "default"  
-  region  = var.region
+  # region  = lookup(var.vpc_info, "region")
+  region = var.region
 
 #   assume_role {
 #     role_arn = "arn:aws:iam:accountID:role/network"
@@ -34,7 +35,7 @@ provider "aws" {
 #######################
 
 resource "aws_vpc" "myVPC" {
-  cidr_block = "192.168.0.0/22"
+  cidr_block = var.vpc_cidr_block
   instance_tenancy = "default"
 
   tags = {
@@ -122,3 +123,25 @@ resource "aws_vpc_endpoint_route_table_association" "example" {
 ##################
 # SECURITY GROUPS
 ##################
+
+resource "aws_security_group" "baseline-sg" {
+  name        = "baseline-sg"
+  description = "baseline-sg"
+  vpc_id      = aws_vpc.myVPC.id
+
+  ingress = [ {
+    cidr_blocks = ["10.0.10.0/24", "10.0.11.0/24", "10.0.12.0/24"]
+    description = "TLS"
+    from_port = 443
+    ipv6_cidr_blocks = []
+    prefix_list_ids = []
+    protocol = "tcp"
+    security_groups = []
+    self = false
+    to_port = 443
+  } ]
+
+  tags = {
+    Name = "baseline-sg"
+  }
+}
